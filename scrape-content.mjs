@@ -67,10 +67,11 @@ async function fetchAndParse(id, filename) {
     // Remove script, style, and navigation elements
     doc.querySelectorAll('script, style, nav, [role="navigation"]').forEach(el => el.remove());
 
-    // Extract paragraphs, divs with content
+    // Extract leaf-level text nodes only (skip parent containers to avoid duplication)
     const paragraphs = Array.from(doc.querySelectorAll('p, div'))
+      .filter(el => !el.querySelector('p, div')) // only elements with no p/div children
       .map(el => el.textContent?.trim())
-      .filter(text => text && text.length > 20); // Filter out tiny fragments
+      .filter(text => text && text.length > 20);
 
     if (paragraphs.length === 0) {
       // Fallback: use all body text

@@ -14,17 +14,55 @@ const MIME = {
 };
 
 http.createServer((req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
-  const ext = path.extname(filePath).toLowerCase();
-  const mime = MIME[ext] || 'application/octet-stream';
+  // Security headers for all responses
+  const securityHeaders = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com fonts.googleapis.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com",
+  };
 
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end('Not found');
+  try {
+    // Normalize and validate path to prevent traversal attacks
+    const requestPath = req.url === '/' ? '/index.html' : req.url;
+    const normalizedPath = path.normalize(requestPath);
+
+    // Ensure path doesn't try to escape project directory
+    if (normalizedPath.startsWith('..') || normalizedPath.includes('/../')) {
+      res.writeHead(403, securityHeaders);
+      res.end('Forbidden');
       return;
     }
-    res.writeHead(200, { 'Content-Type': mime });
-    res.end(data);
-  });
+
+    let filePath = path.join(__dirname, normalizedPath);
+    const resolvedPath = path.resolve(filePath);
+    const resolvedDir = path.resolve(__dirname);
+
+    // Verify resolved path is within project directory
+    if (!resolvedPath.startsWith(resolvedDir)) {
+      res.writeHead(403, securityHeaders);
+      res.end('Forbidden');
+      return;
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = MIME[ext] || 'application/octet-stream';
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404, securityHeaders);
+        res.end('Not found');
+        return;
+      }
+
+      const responseHeaders = {
+        ...securityHeaders,
+        'Content-Type': mime + (mime.startsWith('text/') ? '; charset=utf-8' : ''),
+      };
+      res.writeHead(200, responseHeaders);
+      res.end(data);
+    });
+  } catch (err) {
+    res.writeHead(500, securityHeaders);
+    res.end('Internal server error');
+  }
 }).listen(PORT, () => console.log(`Serving at http://localhost:${PORT}`));

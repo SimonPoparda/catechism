@@ -1,0 +1,16 @@
+name = "catechism"
+type = "javascript"
+compatibility_date = "2026-05-19"
+main = "worker.js"
+workers_dev = true
+
+# Disable all build processes - static worker, no dependencies
+[build]
+command = "ls -la && echo 'Catechism Worker ready'"
+
+[build.upload]
+format = "service-worker"
+
+# Don't install dependencies
+[env.production]
+name = "catechism-prod"

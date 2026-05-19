@@ -12,9 +12,7 @@
   "author": "Simon Poparda",
   "license": "ISC",
   "type": "module",
-  "devDependencies": {
-    "wrangler": "^4.93.0"
-  },
+  "devDependencies": {},
   "dependencies": {
     "iconv-lite": "^0.7.2",
     "jsdom": "^29.1.1",

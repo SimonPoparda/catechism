@@ -287,6 +287,9 @@ body { font-family: 'EB Garamond', Georgia, serif; background: var(--navy); heig
 <div id="overlay" onclick="closeSidebar()"></div>
 
 <main id="main">
+  <div id="error-banner" style="display:none; background:#d32f2f; color:#fff; padding:12px 20px; text-align:center; font-size:14px; border-bottom:1px solid #b71c1c; z-index:50; flex-shrink:0;">
+    <strong>Uwaga:</strong> Nie udało się załadować pełnego zawartości. Wyświetlane są wersje rezerwowe sekcji.
+  </div>
   <header class="topbar">
     <button id="menu-btn" onclick="toggleSidebar()" aria-label="Nawigacja">&#9776;</button>
     <div id="breadcrumb"><span class="cur">Strona główna</span></div>
@@ -413,18 +416,86 @@ function escapeHtml(text) {
 
 // Content will be loaded from content.json
 let CONTENT = {};
+let contentLoadError = false;
+
+// Show error banner
+function showErrorBanner() {
+  const banner = document.getElementById('error-banner');
+  if (banner) {
+    banner.style.display = 'block';
+  }
+}
+
+// Hide error banner
+function hideErrorBanner() {
+  const banner = document.getElementById('error-banner');
+  if (banner) {
+    banner.style.display = 'none';
+  }
+}
+
+// Validate content JSON structure
+function validateContentStructure(data) {
+  if (!data || typeof data !== 'object') {
+    console.error('Invalid content: not an object');
+    return false;
+  }
+
+  // Check if it has at least some section IDs (basic validation)
+  const sectionIds = Object.keys(data);
+  if (sectionIds.length === 0) {
+    console.warn('Warning: content object is empty');
+    return true; // Don't fail on empty object, just warn
+  }
+
+  // Validate a few entries for proper structure
+  let validEntries = 0;
+  for (const id of sectionIds.slice(0, 5)) {
+    const section = data[id];
+    if (section && typeof section === 'object' && section.body) {
+      validEntries++;
+    }
+  }
+
+  if (validEntries === 0 && sectionIds.length > 0) {
+    console.error('Invalid content: no valid sections found');
+    return false;
+  }
+
+  return true;
+}
 
 // Load content on page start
 async function loadContent() {
   try {
     const res = await fetch('./content.json');
-    if (res.ok) {
-      const data = await res.json();
-      CONTENT = data;
-      console.log(`Loaded ${Object.keys(CONTENT).length} sections from content.json`);
+
+    if (!res.ok) {
+      console.error(`[${res.status}] Failed to fetch content.json: ${res.statusText}`);
+      contentLoadError = true;
+      return;
     }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (jsonErr) {
+      console.error('Failed to parse content.json as JSON:', jsonErr);
+      contentLoadError = true;
+      return;
+    }
+
+    if (!validateContentStructure(data)) {
+      console.error('Content structure validation failed');
+      contentLoadError = true;
+      return;
+    }
+
+    CONTENT = data;
+    console.log(`Loaded ${Object.keys(CONTENT).length} sections from content.json`);
   } catch (err) {
-    console.warn('Could not load content.json:', err);
+    console.error('Unexpected error loading content.json:', err);
+    contentLoadError = true;
   }
 }
 
@@ -747,6 +818,15 @@ function closeSidebar() {
   buildTOC();
   // Load content from JSON and initialize page
   await loadContent();
+
+  // Show error banner if content loading failed
+  if (contentLoadError) {
+    showErrorBanner();
+    console.warn('Using fallback content due to load error');
+  } else {
+    hideErrorBanner();
+  }
+
   const _hash = location.hash.slice(1);
   if (_hash && FLAT.includes(_hash)) showSection(_hash);
   else showHome();

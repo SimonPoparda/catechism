@@ -48,18 +48,39 @@ http.createServer((req, res) => {
     const mime = MIME[ext] || 'application/octet-stream';
 
     fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404, securityHeaders);
-        res.end('Not found');
-        return;
-      }
+      try {
+        if (err) {
+          if (err.code === 'ENOENT') {
+            console.warn(`[404] File not found: ${filePath}`);
+            res.writeHead(404, securityHeaders);
+            res.end('Not found');
+          } else if (err.code === 'EACCES') {
+            console.error(`[403] Access denied: ${filePath}`);
+            res.writeHead(403, securityHeaders);
+            res.end('Forbidden');
+          } else if (err.code === 'EISDIR') {
+            console.warn(`[400] Expected file, got directory: ${filePath}`);
+            res.writeHead(400, securityHeaders);
+            res.end('Bad request');
+          } else {
+            console.error(`[500] File read error: ${err.code || err.message}`);
+            res.writeHead(500, securityHeaders);
+            res.end('Internal server error');
+          }
+          return;
+        }
 
-      const responseHeaders = {
-        ...securityHeaders,
-        'Content-Type': mime + (mime.startsWith('text/') ? '; charset=utf-8' : ''),
-      };
-      res.writeHead(200, responseHeaders);
-      res.end(data);
+        const responseHeaders = {
+          ...securityHeaders,
+          'Content-Type': mime + (mime.startsWith('text/') ? '; charset=utf-8' : ''),
+        };
+        res.writeHead(200, responseHeaders);
+        res.end(data);
+      } catch (innerErr) {
+        console.error(`[500] Callback error: ${innerErr.message}`);
+        res.writeHead(500, securityHeaders);
+        res.end('Internal server error');
+      }
     });
   } catch (err) {
     res.writeHead(500, securityHeaders);

@@ -1,6 +1,6 @@
 # Katechizm — Polish Catholic Catechism Web App
 
-A responsive, elegant web application displaying the complete Polish Catholic Catechism (*Katechism Kościoła Katolickiego*) with full-text search, sidebar navigation, and mobile support. The app features a sophisticated parchment-and-gold design inspired by traditional Catholic liturgical documents.
+A responsive, elegant web application displaying the complete Polish Catholic Catechism (*Katechism Kościoła Katolickiego*) with full-text search, sidebar navigation, and mobile support. The app features a sophisticated parchment-and-gold design inspired by traditional Catholic liturgical documents
 
 ## Quick Start
 

@@ -1,0 +1,19 @@
+{
+  "name": "katechizm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "puppeteer": "^25.0.4"
+  },
+  "dependencies": {
+    "playwright-core": "^1.60.0"
+  }
+}

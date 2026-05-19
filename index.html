@@ -401,6 +401,16 @@ function getPartForSection(id) {
 // Content will be loaded from content.json
 let CONTENT = {};
 
+/**
+ * Fetch and load catechism content from content.json
+ *
+ * Retrieves the preprocessed catechism JSON file containing all sections,
+ * paragraphs, and metadata. On success, populates the global CONTENT object.
+ * If loading fails, the app falls back to hardcoded FALLBACK_CONTENT.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
 // Load content on page start
 async function loadContent() {
   try {
@@ -486,6 +496,16 @@ const FALLBACK_CONTENT = {
 };
 
 // ──────────────────────────────────────────────
+/**
+ * Build and render the complete table of contents (sidebar navigation)
+ *
+ * Generates the hierarchical navigation menu showing all catechism sections
+ * organized by preliminary documents, then four main parts with their subsections.
+ * Includes collapsible toggles and clickable links to every catechism section.
+ * Updates the #toc sidebar element with the complete generated HTML.
+ *
+ * @returns {void}
+ */
 // TOC
 // ──────────────────────────────────────────────
 function buildTOC() {
@@ -526,6 +546,16 @@ function buildTOC() {
   document.getElementById('toc').innerHTML = html;
 }
 
+/**
+ * Toggle open/closed state of a catechism part in the sidebar
+ *
+ * Expands or collapses a top-level catechism part (I, II, III, IV) in the TOC,
+ * revealing or hiding its subsections and items. Uses CSS class toggling
+ * with smooth transitions.
+ *
+ * @param {string} id - Part ID (e.g., 'p1', 'p2', 'p3', 'p4', 'docs')
+ * @returns {void}
+ */
 function togglePart(id) {
   const el = document.getElementById(`tg-${id}`);
   const wasOpen = el.classList.contains('open');
@@ -617,6 +647,19 @@ function showPartIntro(partId) {
   showSection(firstId);
 }
 
+/**
+ * Display a specific catechism section with full navigation
+ *
+ * Renders the content for a single catechism section by ID, including:
+ * - Section header with paragraph range and part label
+ * - Formatted body text with paragraph numbers
+ * - Previous/Next navigation buttons
+ * - Updates breadcrumbs and active TOC item
+ * - Scrolls to top and closes mobile sidebar
+ *
+ * @param {string} id - Section ID (e.g., 'p1-d1-r1', 'p2-d2-r3')
+ * @returns {void}
+ */
 function showSection(id) {
   currentId = id;
   setActiveTOC(id);
@@ -689,6 +732,17 @@ function buildGenericContent(id) {
   return { eyebrow:'', title:id, partLabel:'', body:'' };
 }
 
+/**
+ * Parse and format catechism text body with paragraph structure
+ *
+ * Converts raw catechism text (with embedded paragraph numbers) into
+ * properly formatted HTML with paragraph badges, intro text, and proper
+ * semantic structure. Splits on pattern: "\n\n[NUM] [TEXT]"
+ * Example: "Intro text\n\n27 Content here\n\n28 More content"
+ *
+ * @param {string} text - Raw catechism text with embedded paragraph numbers
+ * @returns {string} Formatted HTML string with paragraph structure
+ */
 // Format body text: split by paragraph numbers (\n\n27 Text, \n\n28 Text, etc)
 function formatBody(text) {
   if (!text) return '';
@@ -725,10 +779,28 @@ function formatBody(text) {
 // ──────────────────────────────────────────────
 // MOBILE SIDEBAR
 // ──────────────────────────────────────────────
+/**
+ * Toggle the mobile sidebar visibility
+ *
+ * Opens or closes the sidebar navigation on mobile devices by toggling
+ * the 'open' class. Also toggles the overlay backdrop to allow closing
+ * the sidebar when tapping outside it.
+ *
+ * @returns {void}
+ */
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('overlay').classList.toggle('show');
 }
+
+/**
+ * Close the mobile sidebar
+ *
+ * Hides the sidebar and overlay backdrop. Called when navigating to a
+ * section on mobile to automatically hide the menu after selection.
+ *
+ * @returns {void}
+ */
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');

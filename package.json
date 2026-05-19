@@ -1,13 +1,14 @@
 {
   "name": "katechizm",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Polish Catholic Catechism Web Application",
+  "main": "index.html",
   "scripts": {
+    "serve": "node serve.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Simon Poparda",
   "license": "ISC",
   "type": "module",
   "devDependencies": {},

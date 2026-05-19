@@ -1,0 +1,34 @@
+name = "catechism"
+type = "javascript"
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+
+[env.production]
+name = "catechism-prod"
+route = "example.com/*"
+zone_id = ""
+
+[build]
+command = "npm install"
+cwd = "./"
+
+[build.upload]
+format = "service-worker"
+
+[[build.upload.rules]]
+type = "CompiledContentType"
+globs = ["**/*.wasm"]
+fallthrough = true
+
+# Exclude node_modules and other large files
+[build.upload.exclude_patterns]
+patterns = [
+  "node_modules/**",
+  ".wrangler/**",
+  "dist/**",
+  ".env",
+  ".env.local",
+  "*.log"
+]

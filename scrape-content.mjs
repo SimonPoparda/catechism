@@ -1,3 +1,21 @@
+/**
+ * Web Scraper: Polish Catechism Content Extraction
+ *
+ * Fetches the full Polish Catholic Catechism (*Katechismus Catholicae Ecclesiae*)
+ * from opoka.org.pl and extracts text content from 50+ sections. Handles character
+ * encoding conversion (ISO-8859-2 to UTF-8) and saves the raw content to JSON.
+ *
+ * Input: Web pages at http://www.katechizm.opoka.org.pl/[filename]
+ * Output: content-raw.json (raw HTML-extracted text)
+ *
+ * Dependencies:
+ * - node-fetch: HTTP requests
+ * - jsdom: HTML parsing and DOM traversal
+ * - iconv-lite: ISO-8859-2 → UTF-8 character encoding
+ *
+ * Run: node scrape-content.mjs
+ */
+
 import fetch from 'node-fetch';
 import { JSDOM } from 'jsdom';
 import iconv from 'iconv-lite';

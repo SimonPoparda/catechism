@@ -1,3 +1,23 @@
+/**
+ * Content Processor: Polish Catechism ETL Pipeline
+ *
+ * Transforms raw scraped catechism content into a structured, normalized format.
+ * Combines text content from content-raw.json with metadata to create the final
+ * output: content.json. Organizes content by catechism structure (parts, sections).
+ *
+ * Input: content-raw.json (raw HTML-extracted text from scraper)
+ * Output: content.json (processed, normalized, structured data)
+ *
+ * Processing steps:
+ * 1. Load raw scraped content
+ * 2. Attach metadata (titles, subtitles, part labels, paragraph ranges)
+ * 3. Normalize text formatting and whitespace
+ * 4. Validate structure
+ * 5. Write final JSON
+ *
+ * Run: node process-content.mjs
+ */
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

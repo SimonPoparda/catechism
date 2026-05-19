@@ -5,18 +5,10 @@
   "main": "index.html",
   "scripts": {
     "serve": "node serve.mjs",
-    "build": "echo 'Static site ready'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "Simon Poparda",
   "license": "ISC",
-  "type": "module",
-  "devDependencies": {},
-  "dependencies": {
-    "iconv-lite": "^0.7.2",
-    "jsdom": "^29.1.1",
-    "node-fetch": "^3.3.2",
-    "playwright-core": "1.60.0"
-  }
+  "type": "module"
 }

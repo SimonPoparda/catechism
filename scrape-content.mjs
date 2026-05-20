@@ -154,44 +154,29 @@ async function extractFootnotes(filename, footnotes) {
     const buffer = await res.arrayBuffer();
     const html = iconv.decode(Buffer.from(buffer), 'ISO-8859-2');
 
-    const dom = new JSDOM(html);
-    const doc = dom.window.document;
+    // Regex-based parsing: match patterns like:
+    // <a name="..."></a>...<b>N</b>...citation text...<br>
+    const footnotePattern = /<a\s+name="[^"]*"><\/a>[\s\S]*?<b>(\d+)<\/b>([\s\S]*?)<br>/gi;
+    let match;
 
-    // Find all footnote anchors and extract citation text
-    // Pattern: <a name="..."></a><b>N</b> citation text<br>
-    const anchors = Array.from(doc.querySelectorAll('a[name]'));
+    while ((match = footnotePattern.exec(html)) !== null) {
+      const num = match[1];
+      let text = match[2];
 
-    for (const anchor of anchors) {
-      let num = null;
-      let text = '';
+      // Clean up the text: remove HTML tags, decode entities, trim whitespace
+      text = text
+        .replace(/<[^>]*>/g, '') // remove HTML tags
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .trim()
+        .replace(/\s+/g, ' '); // normalize whitespace
 
-      // Look for <b>number</b> after the anchor
-      let node = anchor.nextSibling;
-      while (node) {
-        if (node.nodeType === 1) { // element node
-          if (node.tagName === 'B') {
-            const boldText = node.textContent?.trim();
-            if (boldText && /^\d+$/.test(boldText)) {
-              num = boldText;
-            } else {
-              break; // not a number marker
-            }
-          } else if (node.tagName === 'BR') {
-            break; // end of this footnote
-          } else if (num) {
-            // Accumulate text content after finding the number
-            text += node.textContent || '';
-          }
-        } else if (node.nodeType === 3) { // text node
-          if (num) {
-            text += node.textContent || '';
-          }
-        }
-        node = node.nextSibling;
-      }
-
-      if (num && text.trim()) {
-        footnotes[num] = text.trim();
+      if (text) {
+        footnotes[num] = text;
       }
     }
 

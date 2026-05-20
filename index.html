@@ -999,6 +999,10 @@ function classifyHeading(t) {
 function formatBody(text, footnotes = {}) {
   if (!text) return '';
 
+  // Convert <<...>> guillemet-style quotes to proper characters so they aren't
+  // interpreted as HTML tags by the browser
+  text = text.replace(/<</g, '«').replace(/>>/g, '»');
+
   // Merge footnote mid-sentence fragments: [[FN:N]] followed by a blank line then a
   // sentence continuation (punctuation or lowercase). This collapses spurious paragraph
   // breaks introduced by the source scraper without merging genuine new paragraphs

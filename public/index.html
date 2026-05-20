@@ -989,6 +989,9 @@ function classifyHeading(t) {
 function formatBody(text, footnotes = {}) {
   if (!text) return '';
 
+  // Convert <<...>> guillemet-style quotes to proper characters
+  text = text.replace(/<</g, '«').replace(/>>/g, '»');
+
   // Merge footnote mid-sentence fragments back into their paragraph
   text = text.replace(
     /(\[\[FN:\d+\]\][ \t]*)\n\n([,.:;)(a-ząćęłńóśźż])/g,

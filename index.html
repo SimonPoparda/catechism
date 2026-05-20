@@ -1034,10 +1034,17 @@ document.addEventListener('click', (e) => {
   if (!e.target.classList.contains('fn-ref')) return;
 
   const fnNum = e.target.dataset.fn;
-  const sectionId = window.location.hash.slice(1) || 'home';
+  const sectionId = currentId; // Use currentId which is set when a section is shown
+
+  // Only show footnotes if we're on a section page (not home)
+  if (!sectionId || sectionId === 'home' || !CONTENT[sectionId]) {
+    console.warn('Footnote not available on this page:', sectionId, fnNum);
+    return;
+  }
+
   const section = CONTENT[sectionId];
 
-  if (!section || !section.footnotes || !section.footnotes[fnNum]) {
+  if (!section.footnotes || !section.footnotes[fnNum]) {
     console.warn('Footnote not found:', sectionId, fnNum);
     return;
   }

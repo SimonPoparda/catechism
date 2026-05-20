@@ -228,6 +228,126 @@ body { font-family: 'EB Garamond', Georgia, serif; background: var(--navy); heig
 .sec-subhead { font-family:'Cinzel',serif; font-size:11.5px; font-weight:600; color:var(--navy-mid); letter-spacing:.12em; text-transform:uppercase; margin:34px 0 13px; padding-bottom:7px; border-bottom:1px solid var(--parchment-border); }
 .sec-placeholder { background:rgba(196,154,60,.07); border:1px solid rgba(196,154,60,.18); border-left:3px solid var(--gold); padding:15px 20px; margin:26px 0; font-family:'EB Garamond',serif; font-size:14px; font-style:italic; color:var(--ink-light); line-height:1.62; }
 
+/* Footnote markers */
+.fn-ref {
+  color: #cc0000;
+  font-size: 0.65em;
+  vertical-align: super;
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 0;
+  padding: 0 1px;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+  user-select: none;
+}
+.fn-ref:hover {
+  text-decoration: underline;
+  color: #ff3333;
+  text-shadow: 0 0 6px rgba(204, 0, 0, 0.4);
+}
+.fn-ref:focus-visible {
+  outline: 2px solid #C49A3C;
+  outline-offset: 1px;
+}
+.fn-ref:active {
+  color: #990000;
+}
+
+/* Footnote Dialog */
+#fn-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#fn-dialog[hidden] {
+  display: none;
+}
+#fn-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 15, 30, 0.7);
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.3s ease;
+}
+#fn-dialog-box {
+  position: relative;
+  z-index: 1001;
+  background: #F5ECD6;
+  border: 2px solid #090F1E;
+  border-radius: 4px;
+  max-width: 600px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(9, 15, 30, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#fn-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #090F1E 0%, #0f1626 100%);
+  border-bottom: 2px solid #C49A3C;
+  flex-shrink: 0;
+}
+#fn-dialog-title {
+  color: #C49A3C;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+#fn-dialog-close {
+  background: none;
+  border: none;
+  color: #C49A3C;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease, transform 0.2s ease;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#fn-dialog-close:hover {
+  color: #F5ECD6;
+  transform: scale(1.1);
+}
+#fn-dialog-close:focus-visible {
+  outline: 2px solid #C49A3C;
+  outline-offset: 2px;
+}
+#fn-dialog-body {
+  padding: 24px;
+  font-family: 'EB Garamond', serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #1A0E06;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .sec-nav { display:flex; gap:12px; margin-top:58px; padding-top:26px; border-top:1px solid var(--parchment-border); }
 .snb { flex:1; padding:13px 18px; border:1px solid var(--parchment-border); background:transparent; cursor:pointer; transition:border-color .18s, background .18s; text-align:left; }
 .snb:hover { border-color:var(--gold); background:rgba(196,154,60,.05); }
@@ -297,6 +417,18 @@ body { font-family: 'EB Garamond', Georgia, serif; background: var(--navy); heig
   </header>
   <div id="content-scroll">
     <div id="content-area"></div>
+  </div>
+
+  <!-- Footnote Dialog -->
+  <div id="fn-dialog" role="dialog" aria-modal="true" aria-labelledby="fn-dialog-title" hidden>
+    <div id="fn-dialog-backdrop"></div>
+    <div id="fn-dialog-box">
+      <div id="fn-dialog-header">
+        <span id="fn-dialog-title">Przypis</span>
+        <button id="fn-dialog-close" aria-label="Zamknij">×</button>
+      </div>
+      <div id="fn-dialog-body"></div>
+    </div>
   </div>
 </main>
 
@@ -792,7 +924,7 @@ function buildGenericContent(id) {
       eyebrow: c.subtitle || id,
       title: c.title,
       partLabel: c.part,
-      body: formatBody(c.body)
+      body: formatBody(c.body, c.footnotes || {})
     };
   }
 
@@ -821,14 +953,25 @@ function buildGenericContent(id) {
  *
  * Converts raw catechism text (with embedded paragraph numbers) into
  * properly formatted HTML with paragraph badges, intro text, and proper
- * semantic structure. Splits on pattern: "\n\n[NUM] [TEXT]"
- * Example: "Intro text\n\n27 Content here\n\n28 More content"
+ * semantic structure. Replaces footnote markers [[FN:N]] with clickable
+ * superscript HTML spans. Splits on pattern: "\n\n[NUM] [TEXT]"
+ * Example: "Intro text\n\n27 Content [[FN:1]] here\n\n28 More content"
  *
- * @param {string} text - Raw catechism text with embedded paragraph numbers
- * @returns {string} Formatted HTML string with paragraph structure
+ * Note: Content is NOT escaped via escapeHtml() after footnote replacement
+ * because it may contain footnote HTML spans. This is safe because the source
+ * is a trusted static JSON file (official catechism text).
+ *
+ * @param {string} text - Raw catechism text with embedded paragraph numbers and [[FN:N]] markers
+ * @param {object} footnotes - Object mapping footnote numbers to citation text (not used for rendering, passed for future use)
+ * @returns {string} Formatted HTML string with paragraph structure and clickable footnote markers
  */
-function formatBody(text) {
+function formatBody(text, footnotes = {}) {
   if (!text) return '';
+
+  // Replace footnote markers with HTML spans before splitting paragraphs
+  text = text.replace(/\[\[FN:(\d+)\]\]/g, (m, n) =>
+    `<span class="fn-ref" data-fn="${n}" tabindex="0" role="button" aria-label="Przypis ${n}">${n}</span>`
+  );
 
   const blocks = text.split(/\n\n+/);
   let html = '';
@@ -840,12 +983,12 @@ function formatBody(text) {
     const paraMatch = trimmed.match(/^(\d+)\s+([\s\S]+)/);
     if (paraMatch) {
       const num = escapeHtml(paraMatch[1]);
-      const content = escapeHtml(paraMatch[2].replace(/\n/g, ' ').trim());
+      const content = paraMatch[2].replace(/\n/g, ' ').trim();
       html += `<div class="para-block"><span class="para-num-badge">${num}</span><p>${content}</p></div>`;
     } else if (trimmed.length < 100) {
       html += `<div class="sec-subhead">${escapeHtml(trimmed)}</div>`;
     } else {
-      html += `<p class="para-cont">${escapeHtml(trimmed.replace(/\n/g, ' '))}</p>`;
+      html += `<p class="para-cont">${trimmed.replace(/\n/g, ' ')}</p>`;
     }
   }
 
@@ -881,6 +1024,52 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
 }
+
+// ──────────────────────────────────────────────
+// FOOTNOTE DIALOG HANDLERS
+// ──────────────────────────────────────────────
+let lastFnRef = null; // Track last clicked footnote for focus restoration
+
+document.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('fn-ref')) return;
+
+  const fnNum = e.target.dataset.fn;
+  const sectionId = window.location.hash.slice(1) || 'home';
+  const section = CONTENT[sectionId];
+
+  if (!section || !section.footnotes || !section.footnotes[fnNum]) {
+    console.warn('Footnote not found:', sectionId, fnNum);
+    return;
+  }
+
+  const dialog = document.getElementById('fn-dialog');
+  const body = document.getElementById('fn-dialog-body');
+  const closeBtn = document.getElementById('fn-dialog-close');
+
+  body.textContent = section.footnotes[fnNum];
+  dialog.removeAttribute('hidden');
+  lastFnRef = e.target;
+
+  // Focus management
+  closeBtn.focus();
+});
+
+// Close dialog and restore focus
+function closeDialog() {
+  const dialog = document.getElementById('fn-dialog');
+  dialog.setAttribute('hidden', '');
+  if (lastFnRef) lastFnRef.focus();
+}
+
+document.getElementById('fn-dialog-close').addEventListener('click', closeDialog);
+document.getElementById('fn-dialog-backdrop').addEventListener('click', closeDialog);
+
+// Escape key closes dialog
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !document.getElementById('fn-dialog').hasAttribute('hidden')) {
+    closeDialog();
+  }
+});
 
 // ──────────────────────────────────────────────
 // INIT

@@ -65,13 +65,19 @@ const SECTIONS_META = {
 
 // Build final content structure
 const content = {};
-for (const [id, text] of Object.entries(raw)) {
+for (const [id, rawData] of Object.entries(raw)) {
   const meta = SECTIONS_META[id] || {};
+  // Handle both old string format and new object format with { text, footnotes }
+  const { text, footnotes } = typeof rawData === 'string'
+    ? { text: rawData, footnotes: {} }
+    : rawData;
+
   content[id] = {
     title: meta.title || id,
     subtitle: meta.subtitle || '',
     part: meta.part || '',
-    body: text || ''
+    body: text || '',
+    footnotes: footnotes || {}
   };
 }
 
@@ -79,8 +85,19 @@ for (const [id, text] of Object.entries(raw)) {
 const outPath = path.join(__dirname, 'content.json');
 fs.writeFileSync(outPath, JSON.stringify(content, null, 2));
 
+// Copy to public/content.json
+const publicDir = path.join(__dirname, 'public');
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+}
+const publicPath = path.join(publicDir, 'content.json');
+fs.copyFileSync(outPath, publicPath);
+
 // Log stats
 const totalChars = Object.values(content).reduce((sum, s) => sum + (s.body?.length || 0), 0);
+const totalFootnotes = Object.values(content).reduce((sum, s) => sum + (Object.keys(s.footnotes || {}).length || 0), 0);
 console.log(`✓ Processed ${Object.keys(content).length} sections`);
 console.log(`  Total content: ${(totalChars / 1000000).toFixed(2)} MB`);
+console.log(`  Total footnotes: ${totalFootnotes}`);
 console.log(`  Saved to: ${outPath}`);
+console.log(`  Copied to: ${publicPath}`);

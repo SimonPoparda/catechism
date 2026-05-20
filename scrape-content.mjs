@@ -88,7 +88,7 @@ async function fetchAndParse(id, filename) {
     // Extract leaf-level text nodes only (skip parent containers to avoid duplication)
     const paragraphs = Array.from(doc.querySelectorAll('p, div'))
       .filter(el => !el.querySelector('p, div')) // only elements with no p/div children
-      .map(el => el.textContent?.trim())
+      .map(el => el.innerHTML?.trim() || '')
       .filter(text => text && text.length > 20);
 
     if (paragraphs.length === 0) {
@@ -98,26 +98,122 @@ async function fetchAndParse(id, filename) {
         .split(/[\n\r]+/)
         .map(l => l.trim())
         .filter(l => l.length > 20);
-      if (lines.length > 0) return lines.join('\n\n');
+      if (lines.length > 0) {
+        return { text: lines.join('\n\n'), footnotes: {} };
+      }
       return null;
     }
 
-    return paragraphs.join('\n\n');
+    // Combine HTML content into one string
+    let combinedHtml = paragraphs.join('\n\n');
+
+    // Extract footnotes from HTML and replace with markers
+    const footnotes = {};
+    const footnoteLinkPattern = /<a\s+href="([^"]+)"\s+target="[^"]*"><sup>(?:<font[^>]*>)?<b>(\d+)<\/b>(?:<\/font>)?<\/sup><\/a>/gi;
+
+    let footnoteFilename = null;
+    combinedHtml = combinedHtml.replace(footnoteLinkPattern, (match, href, num) => {
+      // Extract footnotes filename from first match (e.g., "články-1-1.htm" from "články-1-1.htm#18")
+      if (!footnoteFilename) {
+        const fileMatch = href.match(/^([^#]+)\.htm/i);
+        if (fileMatch) {
+          footnoteFilename = fileMatch[1] + '.htm';
+        }
+      }
+      // Replace footnote link with marker
+      return `[[FN:${num}]]`;
+    });
+
+    // Try to fetch and parse footnotes if we found any
+    if (footnoteFilename) {
+      await extractFootnotes(footnoteFilename, footnotes);
+    }
+
+    // Convert HTML to plain text
+    const tempDom = new JSDOM(combinedHtml);
+    const plainText = tempDom.window.document.body?.textContent || combinedHtml;
+
+    return { text: plainText, footnotes };
   } catch (err) {
     console.warn(`  ✗ Error: ${err.message}`);
     return null;
   }
 }
 
+async function extractFootnotes(filename, footnotes) {
+  try {
+    const url = `${BASE}/${filename}`;
+    console.log(`  → Fetching footnotes from ${filename}...`);
+
+    const res = await fetch(url, { timeout: 10000 });
+    if (!res.ok) {
+      console.warn(`    ⚠ Footnotes HTTP ${res.status}`);
+      return;
+    }
+
+    const buffer = await res.arrayBuffer();
+    const html = iconv.decode(Buffer.from(buffer), 'ISO-8859-2');
+
+    const dom = new JSDOM(html);
+    const doc = dom.window.document;
+
+    // Find all footnote anchors and extract citation text
+    // Pattern: <a name="..."></a><b>N</b> citation text<br>
+    const anchors = Array.from(doc.querySelectorAll('a[name]'));
+
+    for (const anchor of anchors) {
+      let num = null;
+      let text = '';
+
+      // Look for <b>number</b> after the anchor
+      let node = anchor.nextSibling;
+      while (node) {
+        if (node.nodeType === 1) { // element node
+          if (node.tagName === 'B') {
+            const boldText = node.textContent?.trim();
+            if (boldText && /^\d+$/.test(boldText)) {
+              num = boldText;
+            } else {
+              break; // not a number marker
+            }
+          } else if (node.tagName === 'BR') {
+            break; // end of this footnote
+          } else if (num) {
+            // Accumulate text content after finding the number
+            text += node.textContent || '';
+          }
+        } else if (node.nodeType === 3) { // text node
+          if (num) {
+            text += node.textContent || '';
+          }
+        }
+        node = node.nextSibling;
+      }
+
+      if (num && text.trim()) {
+        footnotes[num] = text.trim();
+      }
+    }
+
+    if (Object.keys(footnotes).length > 0) {
+      console.log(`    ✓ Found ${Object.keys(footnotes).length} footnotes`);
+    }
+  } catch (err) {
+    console.warn(`    ✗ Footnotes error: ${err.message}`);
+  }
+}
+
 async function scrapeAll() {
   const content = {};
   let count = 0;
+  let footnoteCount = 0;
 
   for (const [id, file] of Object.entries(SECTIONS)) {
-    const text = await fetchAndParse(id, file);
-    if (text) {
-      content[id] = text;
+    const result = await fetchAndParse(id, file);
+    if (result) {
+      content[id] = result;
       count++;
+      footnoteCount += Object.keys(result.footnotes || {}).length;
     }
     // Polite throttle
     await new Promise(r => setTimeout(r, 500));
@@ -126,6 +222,7 @@ async function scrapeAll() {
   const outPath = path.join(__dirname, 'content-raw.json');
   fs.writeFileSync(outPath, JSON.stringify(content, null, 2));
   console.log(`\n✓ Scraped ${count}/${Object.keys(SECTIONS).length} sections`);
+  console.log(`  Total footnotes found: ${footnoteCount}`);
   console.log(`Saved to: ${outPath}`);
 }
 

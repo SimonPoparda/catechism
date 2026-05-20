@@ -2,5 +2,10 @@
   "name": "katechizm",
   "version": "1.0.0",
   "description": "Polish Catholic Catechism",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "iconv-lite": "^0.7.2",
+    "jsdom": "^29.1.1",
+    "node-fetch": "^3.3.2"
+  }
 }

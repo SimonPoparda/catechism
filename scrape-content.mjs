@@ -156,7 +156,8 @@ async function extractFootnotes(filename, footnotes) {
 
     // Regex-based parsing: match patterns like:
     // <a name="..."></a>...<b>N</b>...citation text...<br>
-    const footnotePattern = /<a\s+name="[^"]*"><\/a>[\s\S]*?<b>(\d+)<\/b>([\s\S]*?)<br>/gi;
+    // Handles malformed HTML like: <font color=red><b>1</font></b> (mismatched close tags)
+    const footnotePattern = /<a\s+name="[^"]*"><\/a>[\s\S]*?<b>(\d+)[\s\S]*?<\/b>([\s\S]*?)<br>/gi;
     let match;
 
     while ((match = footnotePattern.exec(html)) !== null) {

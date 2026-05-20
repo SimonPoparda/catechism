@@ -173,7 +173,8 @@ body { font-family: 'EB Garamond', Georgia, serif; background: var(--navy); heig
 /* Individual numbered paragraphs */
 .para-block {
   display:flex;
-  gap:16px;
+  flex-direction:column;
+  gap:8px;
   align-items:flex-start;
   margin-bottom:26px;
   padding:16px 0;
@@ -187,15 +188,15 @@ body { font-family: 'EB Garamond', Georgia, serif; background: var(--navy); heig
   display:flex;
   align-items:center;
   justify-content:center;
-  min-width:52px;
-  width:52px;
-  height:52px;
+  min-width:42px;
+  width:42px;
+  height:42px;
   background:rgba(196,154,60,.08);
   border:2px solid var(--parchment-border);
   border-radius:4px;
   flex-shrink:0;
   font-family:'Cinzel',serif;
-  font-size:16px;
+  font-size:13px;
   font-weight:700;
   color:var(--navy-mid);
 }
@@ -223,7 +224,7 @@ body { font-family: 'EB Garamond', Georgia, serif; background: var(--navy); heig
   margin-top:7px;
   color:var(--navy-mid);
 }
-.para-cont { font-family:'EB Garamond',serif; font-size:17px; font-style:italic; color:var(--ink-mid); line-height:1.75; margin:0 0 22px 68px; }
+.para-cont { font-family:'EB Garamond',serif; font-size:17px; font-style:italic; color:var(--ink-mid); line-height:1.75; margin:0 0 22px 0; }
 .para-n { font-family:'Cinzel',serif; font-size:10px; font-weight:700; color:var(--gold); letter-spacing:.05em; vertical-align:super; margin-right:3px; user-select:none; }
 .sec-subhead { font-family:'Cinzel',serif; font-size:11.5px; font-weight:600; color:var(--navy-mid); letter-spacing:.12em; text-transform:uppercase; margin:34px 0 13px; padding-bottom:7px; border-bottom:1px solid var(--parchment-border); }
 .sec-placeholder { background:rgba(196,154,60,.07); border:1px solid rgba(196,154,60,.18); border-left:3px solid var(--gold); padding:15px 20px; margin:26px 0; font-family:'EB Garamond',serif; font-size:14px; font-style:italic; color:var(--ink-light); line-height:1.62; }
